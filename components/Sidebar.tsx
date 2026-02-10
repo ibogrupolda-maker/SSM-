@@ -6,7 +6,8 @@ import {
   Siren, 
   Users, 
   Settings, 
-  LogOut
+  LogOut,
+  X
 } from 'lucide-react';
 import SSMLogo from './SSMLogo';
 import { UserRole } from '../types';
@@ -16,9 +17,10 @@ interface SidebarProps {
   setActiveTab: (tab: string) => void;
   userRole: UserRole;
   onLogout: () => void;
+  isOpen?: boolean;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, userRole, onLogout }) => {
+const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, userRole, onLogout, isOpen }) => {
   const allMenuItems = [
     { id: 'dashboard', icon: LayoutDashboard, label: 'CENTRO DE COMANDO DIGITAL', roles: ['ADMIN_OC', 'OPERADOR_SALA', 'ANALISTA_RISCO'] },
     { id: 'protocols', icon: ClipboardList, label: 'TRIAGEM SSM', roles: ['ADMIN_OC', 'OPERADOR_SALA'] },
@@ -29,8 +31,13 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, userRole, on
   const menuItems = allMenuItems.filter(item => item.roles.includes(userRole));
 
   return (
-    <aside className="w-64 bg-slate-950 text-slate-400 flex flex-col h-screen sticky top-0 border-r border-slate-800">
-      <div className="p-6 flex flex-col gap-2">
+    <aside className={`
+      fixed md:sticky top-0 left-0 z-[100] md:z-0
+      w-64 bg-slate-950 text-slate-400 flex flex-col h-screen 
+      border-r border-slate-800 transition-transform duration-300 ease-in-out
+      ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+    `}>
+      <div className="p-6 flex flex-col gap-2 relative">
         <div className="flex items-center gap-3">
           <SSMLogo className="w-10 h-10 drop-shadow-md" />
           <span className="text-2xl font-black text-white tracking-tight font-corporate">SSM</span>

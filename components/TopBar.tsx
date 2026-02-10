@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Bell, ChevronDown, ShieldCheck, UserCircle, LogOut, Settings, Hash, UserPlus, Shield } from 'lucide-react';
+import { Bell, ChevronDown, ShieldCheck, UserCircle, LogOut, Settings, Hash, UserPlus, Shield, Menu } from 'lucide-react';
 import { AdminUser } from '../types';
 
 interface TopBarProps {
@@ -8,9 +8,10 @@ interface TopBarProps {
   setActiveTab: (tab: string) => void;
   currentUser: AdminUser;
   onLogout?: () => void;
+  onToggleSidebar?: () => void;
 }
 
-const TopBar: React.FC<TopBarProps> = ({ activeTab, setActiveTab, currentUser, onLogout }) => {
+const TopBar: React.FC<TopBarProps> = ({ activeTab, setActiveTab, currentUser, onLogout, onToggleSidebar }) => {
   const [showUserMenu, setShowUserMenu] = useState(false);
 
   const getRoleDisplayName = (role: string, id: string) => {
@@ -40,10 +41,18 @@ const TopBar: React.FC<TopBarProps> = ({ activeTab, setActiveTab, currentUser, o
   };
 
   return (
-    <header className="bg-white border-b border-slate-200 px-8 flex flex-col z-40 shrink-0">
+    <header className="bg-white border-b border-slate-200 px-4 md:px-8 flex flex-col z-40 shrink-0">
       <div className="h-16 flex items-center justify-between">
-        <div className="flex items-center gap-10">
-          <nav className="flex gap-6">
+        <div className="flex items-center gap-4 md:gap-10">
+          {/* Menu Toggle para Mobile */}
+          <button 
+            onClick={onToggleSidebar}
+            className="p-2 -ml-2 text-slate-500 hover:bg-slate-50 rounded-lg md:hidden"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
+
+          <nav className="hidden lg:flex gap-6">
             <button 
               onClick={() => setActiveTab('dashboard')}
               className={`text-xs font-black uppercase tracking-widest px-4 py-1.5 rounded-full border transition-all ${
@@ -91,10 +100,15 @@ const TopBar: React.FC<TopBarProps> = ({ activeTab, setActiveTab, currentUser, o
               </button>
             )}
           </nav>
+          
+          {/* Nome da Tab Mobile */}
+          <div className="lg:hidden">
+            <span className="text-xs font-black text-slate-900 uppercase tracking-widest">{activeTab}</span>
+          </div>
         </div>
 
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 md:gap-6">
+          <div className="flex items-center gap-2 md:gap-4">
             <button className="p-2 text-slate-400 hover:text-slate-900 relative">
               <Bell className="w-5 h-5" />
               <span className="absolute top-2 right-2 w-2 h-2 bg-red-600 rounded-full border-2 border-white"></span>
@@ -103,28 +117,15 @@ const TopBar: React.FC<TopBarProps> = ({ activeTab, setActiveTab, currentUser, o
             <div className="relative">
               <div 
                 onClick={() => setShowUserMenu(!showUserMenu)}
-                className="flex items-center gap-4 pl-4 border-l border-slate-100 cursor-pointer group"
+                className="flex items-center gap-2 md:gap-4 pl-2 md:pl-4 border-l border-slate-100 cursor-pointer group"
               >
-                <div className="w-9 h-9 rounded-xl bg-slate-900 flex items-center justify-center text-white text-[11px] font-black border-2 border-slate-100 shadow-sm overflow-hidden">
+                <div className="w-8 h-8 md:w-9 md:h-9 rounded-xl bg-slate-900 flex items-center justify-center text-white text-[10px] font-black border-2 border-slate-100 shadow-sm overflow-hidden">
                   <img src={currentUser.avatar} alt={currentUser.name} className="w-full h-full object-cover" />
                 </div>
-                <div className="flex flex-col items-start min-w-[100px]">
+                <div className="hidden sm:flex flex-col items-start min-w-[80px]">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-black text-slate-900 leading-none truncate max-w-[120px]">{currentUser.name}</span>
-                    <ChevronDown className={`w-3 h-3 text-slate-400 group-hover:text-slate-900 transition-transform ${showUserMenu ? 'rotate-180' : ''}`} />
-                  </div>
-                  <div className="flex items-center gap-1.5 mt-1.5">
-                    <div className="bg-slate-900 text-white px-1.5 py-0.5 rounded flex items-center gap-1 shadow-sm">
-                      <Hash className="w-2 h-2" />
-                      <span className="text-[8px] font-black uppercase tracking-tighter whitespace-nowrap">
-                        {currentUser.id}
-                      </span>
-                    </div>
-                    <div className="bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
-                      <span className="text-[8px] font-black text-blue-600 uppercase tracking-widest whitespace-nowrap">
-                        {getRoleDisplayName(currentUser.role, currentUser.id)}
-                      </span>
-                    </div>
+                    <span className="text-[11px] md:text-xs font-black text-slate-900 leading-none truncate max-w-[100px]">{currentUser.name.split(' ')[0]}</span>
+                    <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform ${showUserMenu ? 'rotate-180' : ''}`} />
                   </div>
                 </div>
               </div>
@@ -159,7 +160,6 @@ const TopBar: React.FC<TopBarProps> = ({ activeTab, setActiveTab, currentUser, o
                       <Settings className="w-4 h-4" /> Definições
                     </button>
                     
-                    {/* NOVA OPÇÃO: EXCLUSIVA PARA ADM-001 */}
                     {currentUser.id === 'ADM-001' && (
                       <button 
                         onClick={handleOpenAccountManagement}

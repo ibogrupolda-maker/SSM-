@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { ShieldCheck, User, Phone, PhoneOff, AlertCircle, X, ShieldAlert } from 'lucide-react';
+import { ShieldCheck, User, Phone, PhoneOff, AlertCircle, X, ShieldAlert, Menu } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 import TopBar from './components/TopBar';
 import DashboardOverview from './components/DashboardOverview';
@@ -17,13 +17,11 @@ import { EmergencyCase, EmergencyPriority, AdminUser, AmbulanceState, OperationR
 import { COMPANIES } from './constants';
 import { auditLogger } from './services/auditLogger';
 
-const SESSION_TIMEOUT = 8 * 60 * 60 * 1000;
-const AMB_SESSION_TIMEOUT = 24 * 60 * 60 * 1000;
-
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [currentUser, setCurrentUser] = useState<AdminUser | null>(null);
   const [isLoggedOut, setIsLoggedOut] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
   // Call and SOS State
   const [activeCall, setActiveCall] = useState<EmergencyCase | null>(null);
@@ -57,9 +55,7 @@ const App: React.FC = () => {
   const hospitalCoords: [number, number] = [-25.975, 32.585];
   const ambulanceBasePos: [number, number] = [-25.9692, 32.5732];
   const animationFrameRef = useRef<number | null>(null);
-  const timeoutRef = useRef<number | null>(null);
 
-  // Monitoramento de Novos SOS (Simulação de Real-time)
   useEffect(() => {
     if (currentUser?.role === 'ADMIN_OC' || currentUser?.role === 'OPERADOR_SALA') {
       const lastIncident = incidents[0];
@@ -86,7 +82,7 @@ const App: React.FC = () => {
     if (incomingSOS) {
       setActiveCall(incomingSOS);
       setIncomingSOS(null);
-      setActiveTab('protocols'); // Mudar para triagem imediatamente
+      setActiveTab('protocols');
       auditLogger.log(currentUser!, 'AMBULANCE_PHASE_CHANGE', incomingSOS.id, 'Atendimento de Chamada SOS Iniciado');
     }
   };
@@ -98,7 +94,7 @@ const App: React.FC = () => {
   const handleAddIncident = useCallback((newIncident: EmergencyCase) => {
     setIncidents(prev => [newIncident, ...prev]);
     setActiveTab('dashboard');
-    setActiveCall(null); // Limpar chamada ativa após triagem completa
+    setActiveCall(null);
   }, []);
 
   const handleUpdateAmbulance = useCallback((id: string, updates: Partial<AmbulanceState> | null, finalReport?: OperationReport) => {
@@ -159,19 +155,16 @@ const App: React.FC = () => {
     auditLogger.log(currentUser, 'CORPORATE_SOS_TRIGGERED', newIncident.id);
   }, [currentUser]);
 
-  // Simulação de Movimento da Ambulância
   useEffect(() => {
     const simulate = () => {
       setIncidents(prev => prev.map(inc => {
         if (!inc.ambulanceState || ['idle', 'at_patient', 'at_hospital'].includes(inc.ambulanceState.phase)) return inc;
-
         const target = inc.ambulanceState.phase === 'en_route_to_patient' ? inc.coords : hospitalCoords;
         const current = inc.ambulanceState.currentPos;
-        const speed = 0.0001; // Velocidade de simulação
+        const speed = 0.0001;
         const latDiff = target[0] - current[0];
         const lngDiff = target[1] - current[1];
         const dist = Math.sqrt(latDiff * latDiff + lngDiff * lngDiff);
-
         if (dist < 0.0002) {
           const nextPhase = inc.ambulanceState.phase === 'en_route_to_patient' ? 'at_patient' : 'at_hospital';
           return {
@@ -179,7 +172,6 @@ const App: React.FC = () => {
             ambulanceState: { ...inc.ambulanceState, currentPos: target, phase: nextPhase, eta: 0, distance: 0 }
           };
         }
-
         const move = speed / dist;
         return {
           ...inc,
@@ -217,8 +209,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#F8F9FB] relative">
-      {/* Overlay de Chamada SOS Entrante */}
+    <div className="flex min-h-screen bg-[#F8F9FB] relative overflow-x-hidden">
       {incomingSOS && (
         <div className="fixed inset-0 z-[200] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 animate-in fade-in zoom-in-95">
           <div className="bg-white w-full max-w-lg rounded-[3rem] p-10 shadow-2xl flex flex-col items-center text-center border-t-[12px] border-red-600">
@@ -227,7 +218,6 @@ const App: React.FC = () => {
             </div>
             <h2 className="text-3xl font-black font-corporate uppercase tracking-tight text-slate-900">SOS Corporativo</h2>
             <p className="text-slate-500 font-bold mt-2 uppercase tracking-widest text-xs">Solicitação de Emergência em Tempo-Real</p>
-            
             <div className="w-full bg-slate-50 rounded-3xl p-6 my-8 border border-slate-100 text-left">
               <div className="flex items-center gap-4 mb-4">
                 <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm border border-slate-100">
@@ -239,7 +229,6 @@ const App: React.FC = () => {
                 </div>
               </div>
             </div>
-
             <div className="grid grid-cols-2 gap-4 w-full">
               <button onClick={() => setIncomingSOS(null)} className="py-5 bg-slate-100 text-slate-500 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-slate-200 transition-all">Ignorar</button>
               <button onClick={handleAcceptCall} className="py-5 bg-red-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-red-600/20 hover:bg-red-700 active:scale-95 transition-all flex items-center justify-center gap-3">
@@ -250,7 +239,6 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {/* Overlay de Chamada Ativa (Durante Triagem) */}
       {activeCall && activeTab === 'protocols' && (
         <div className="fixed bottom-10 right-10 z-[150] bg-slate-900 text-white p-6 rounded-[2rem] shadow-2xl border border-white/10 flex items-center gap-6 animate-in slide-in-from-right-10">
           <div className="relative">
@@ -269,12 +257,32 @@ const App: React.FC = () => {
         </div>
       )}
 
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} userRole={currentUser.role} onLogout={handleLogout} />
+      {/* Overlay Backdrop para Mobile Sidebar */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 z-[90] bg-slate-900/50 backdrop-blur-sm md:hidden animate-in fade-in"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      <Sidebar 
+        activeTab={activeTab} 
+        setActiveTab={(tab) => { setActiveTab(tab); setIsSidebarOpen(false); }} 
+        userRole={currentUser.role} 
+        onLogout={handleLogout}
+        isOpen={isSidebarOpen}
+      />
       
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
-        <TopBar activeTab={activeTab} setActiveTab={setActiveTab} currentUser={currentUser} onLogout={handleLogout} />
+        <TopBar 
+          activeTab={activeTab} 
+          setActiveTab={setActiveTab} 
+          currentUser={currentUser} 
+          onLogout={handleLogout}
+          onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+        />
         
-        <div className="flex-1 overflow-y-auto p-6 md:p-10 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto p-4 md:p-10 custom-scrollbar">
           <div className="max-w-[1400px] mx-auto pb-20">
             {activeTab === 'dashboard' && <DashboardOverview incidents={incidents} onDispatch={handleDispatch} currentUser={currentUser} onUpdateIncident={handleUpdateIncident} />}
             {activeTab === 'map' && <ResourceManagement incidents={incidents} />}
