@@ -8,6 +8,15 @@ export enum EmergencyPriority {
 
 export type UserRole = 'ADMIN_OC' | 'OPERADOR_SALA' | 'ANALISTA_RISCO' | 'AMBULANCIA' | 'EMPRESA_CLIENTE';
 
+// Message interface for AI chat functionality
+export interface Message {
+  id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  timestamp: number;
+  groundingUrls?: { title: string, uri: string }[];
+}
+
 export interface AdminUser {
   id: string;
   name: string;
