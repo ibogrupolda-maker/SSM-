@@ -1,0 +1,9 @@
+{
+  "name": "SSM Digital Command Center V01",
+  "description": "A corporate medical emergency platform providing centralized, clinically neutral coordination and governance for healthcare emergencies.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}
